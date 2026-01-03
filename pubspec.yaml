@@ -1,0 +1,67 @@
+name: infinite_loop
+description: "A cyberpunk minimalist puzzle game with infinite loop mechanics."
+publish_to: 'none' 
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # Geniş uyumluluk için güncelledim
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- State Management (Oyun Durumu) ---
+  flutter_riverpod: ^2.6.1
+
+  # --- Local Storage (Skor ve Ayarlar) ---
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # --- UI & Fonts (Neon Tema için) ---
+  # Google Fonts'u ekledim, böylece font dosyası indirmeden
+  # Orbitron ve Rajdhani kullanabileceksin.
+  google_fonts: ^6.2.1
+  shared_preferences: ^2.2.2
+  google_mobile_ads: ^7.0.0
+  audioplayers: ^5.2.1
+  
+  # --- Icons ---
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_launcher_icons: ^0.13.1  # Uygulama ikonu için
+  flutter_native_splash: ^2.4.0    # Profesyonel açılış ekranı için
+
+  # --- Code Generation (Hive Adaptörleri için gerekli) ---
+  build_runner: ^2.4.13
+  hive_generator: ^2.0.1
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/audio/
+    
+
+  # Eğer yerel resimler kullanacaksan burayı açabilirsin
+  # assets:
+  #   - assets/images/
+  #   - assets/sounds/
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: false  # <--- Burayı false yaparsan hata vermeden Android ikonlarını basar
+  image_path: "assets/images/splash.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#0F101E" # Senin oyunun ana koyu teması
+  image: assets/images/splash.png
+  android_12:
+    image: assets/images/splash.png
+    color: "#0F101E"
