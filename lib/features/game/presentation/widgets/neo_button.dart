@@ -1,39 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class NeoButton extends StatefulWidget {
-  final String? text;       // Yazı (START GAME vb.)
-  final IconData? icon;     // İkon (Pause, Settings vb.)
-  final Color color;        // Butonun ana rengi
-  final VoidCallback onTap; // Tıklama fonksiyonu
-  final double width;       // Genişlik (Varsayılan full)
+  final String? text;
+  final IconData? icon;
+  final Color color; // Ana renk (Cyan veya Magenta)
+  final double width;
+  final double height;
+  final VoidCallback onTap;
+  final bool isPrimary; // Dolgulu mu (Start Game) yoksa çizgili mi (Settings)?
 
   const NeoButton({
     Key? key,
     this.text,
     this.icon,
     required this.color,
+    this.width = 60,
+    this.height = 50,
     required this.onTap,
-    this.width = double.infinity,
+    this.isPrimary = false, // Varsayılan: Çizgili (Settings gibi)
   }) : super(key: key);
 
   @override
-  _NeoButtonState createState() => _NeoButtonState();
+  State<NeoButton> createState() => _NeoButtonState();
 }
 
 class _NeoButtonState extends State<NeoButton> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Tıklama animasyonu hızı (100ms)
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      lowerBound: 0.0,
-      upperBound: 0.1, // %10 küçülme oranı
-    );
-    _controller.addListener(() => setState(() {}));
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 100));
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(_controller);
   }
 
   @override
@@ -42,90 +43,62 @@ class _NeoButtonState extends State<NeoButton> with SingleTickerProviderStateMix
     super.dispose();
   }
 
-  void _onTapDown(TapDownDetails details) {
-    _controller.forward(); // Basınca küçül
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    _controller.reverse(); // Bırakınca eski haline dön
-    widget.onTap();        // İşlemi yap
-  }
-
-  void _onTapCancel() {
-    _controller.reverse(); // Vazgeçerse eski haline dön
+  void _handleTap() async {
+    HapticFeedback.lightImpact();
+    await _controller.forward();
+    await _controller.reverse();
+    widget.onTap();
   }
 
   @override
   Widget build(BuildContext context) {
-    double scale = 1.0 - _controller.value;
-
     return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          width: widget.text != null ? widget.width : null,
-          padding: widget.text != null 
-              ? const EdgeInsets.symmetric(vertical: 16) // Büyük buton
-              : const EdgeInsets.all(12),               // Küçük ikon buton
-          
-          decoration: BoxDecoration(
-            color: const Color(0xFF24263A),
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [
-                widget.color.withOpacity(0.8), 
-                widget.color.withOpacity(0.4)
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+      onTap: _handleTap,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: widget.isPrimary ? widget.color : Colors.transparent, // Dolgu ayarı
+              borderRadius: BorderRadius.circular(16),
+              border: widget.isPrimary 
+                  ? null 
+                  : Border.all(color: widget.color.withOpacity(0.5), width: 2),
+              boxShadow: widget.isPrimary
+                  ? [
+                      BoxShadow(color: widget.color.withOpacity(0.6), blurRadius: 20, spreadRadius: 1), // Neon Parlama
+                      BoxShadow(color: widget.color.withOpacity(0.3), blurRadius: 40, spreadRadius: 10),
+                    ]
+                  : [
+                       BoxShadow(color: widget.color.withOpacity(0.1), blurRadius: 10, spreadRadius: 0)
+                    ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withOpacity(0.5),
-                // Basınca gölge azalır ve buton aşağı iniyormuş gibi görünür
-                blurRadius: _controller.value > 0.05 ? 5 : 15,
-                offset: _controller.value > 0.05 ? const Offset(0, 2) : const Offset(0, 6),
-              )
-            ],
-            border: Border.all(
-              color: Colors.white.withOpacity(0.1),
-              width: 1
-            )
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, color: widget.isPrimary ? Colors.black : widget.color, size: 24),
+                  if (widget.text != null) const SizedBox(width: 8),
+                ],
+                if (widget.text != null)
+                  Text(
+                    widget.text!,
+                    style: GoogleFonts.orbitron(
+                      color: widget.isPrimary ? Colors.black : Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
+              ],
+            ),
           ),
-          child: _buildContent(),
         ),
       ),
-    );
-  }
-
-  Widget _buildContent() {
-    // Sadece ikon varsa
-    if (widget.text == null && widget.icon != null) {
-      return Icon(widget.icon, color: Colors.white, size: 24);
-    }
-    
-    // Yazı varsa
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.text == "PLAY AGAIN") ...[
-           const Icon(Icons.refresh, color: Colors.white, size: 20),
-           const SizedBox(width: 8),
-        ],
-        Text(
-          widget.text ?? "",
-          style: const TextStyle( // GoogleFonts kullanıyorsan burayı güncellemen gerekmez, Theme'den alır
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            letterSpacing: 1.5,
-          ),
-        ),
-      ],
     );
   }
 }

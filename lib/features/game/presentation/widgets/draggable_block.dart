@@ -1,6 +1,5 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:infinite_loop/features/game/domain/block_model.dart';
+import '../../domain/block_model.dart';
 
 class DraggableBlock extends StatelessWidget {
   final BlockModel shape;
@@ -10,105 +9,76 @@ class DraggableBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Boyutları hesapla
+    int maxX = 0; int maxY = 0;
+    for (var p in shape.positions) { if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y; }
     
-    // 1. ŞEKLİN GERÇEK BOYUTLARINI HESAPLA
-    // Artık 3x3 sabit değil, şekil neyse o kadar alan kaplayacak.
-    int maxR = shape.positions.map((p) => p.x).reduce(max);
-    int maxC = shape.positions.map((p) => p.y).reduce(max);
+    // Grid hücresi boyutu (GamePage ile uyumlu olmalı)
+    double cellSize = 32.0; 
     
-    // Grid boyutları (Index 0'dan başladığı için +1 ekliyoruz)
-    int gridRows = maxR + 1;
-    int gridCols = maxC + 1;
-
-    // --- ÖLÇÜ AYARLARI ---
-    // Feedback (Sürüklenen): 34px (Gridle aynı)
-    // Menü: Eğer şekil çok büyükse (örn 5 birim), menüye sığsın diye küçültüyoruz.
-    double menuCellSize = (gridRows > 3 || gridCols > 3) ? 14 : 20; 
-    
-    Widget _buildShapeUi(bool isFeedback) {
-      double cellSize = isFeedback ? 34 : menuCellSize; 
-      double margin = isFeedback ? 2 : 1;
-      
-      // Toplam genişlik ve yükseklik (Merkez hesabı için lazım)
-      double totalWidth = (cellSize + (margin * 2)) * gridCols;
-      double totalHeight = (cellSize + (margin * 2)) * gridRows;
-
-      return Container(
-        // Sınırları şeklin tam boyutuna göre çiziyoruz
-        width: totalWidth,
-        height: totalHeight,
-        alignment: Alignment.center,
-        
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(gridRows, (r) { 
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(gridCols, (c) {
-                // Şekil verisini kontrol et
-                bool exists = shape.positions.any((p) => p.x == r && p.y == c);
-                
-                if (!exists) {
-                  return SizedBox(
-                    width: cellSize + (margin * 2), 
-                    height: cellSize + (margin * 2)
-                  );
-                }
-                
-                return Container(
-                  width: cellSize, 
-                  height: cellSize,
-                  margin: EdgeInsets.all(margin),
-                  decoration: BoxDecoration(
-                    color: shape.color,
-                    borderRadius: BorderRadius.circular(isFeedback ? 8 : 4),
-                    boxShadow: isFeedback ? [
-                      BoxShadow(color: shape.color.withOpacity(0.8), blurRadius: 20, spreadRadius: 2)
-                    ] : [],
-                  ),
-                );
-              }),
-            );
-          }),
-        ),
-      );
-    }
-
     return Draggable<BlockModel>(
       data: shape,
-
-      // --- DİNAMİK MERKEZLEME (SORUN ÇÖZÜCÜ) ---
-      // Eskiden sabit 57px diyorduk. Şimdi şeklin genişliği neyse
-      // tam onun yarısını alıyoruz. Böylece kayma imkansız hale geliyor.
-      dragAnchorStrategy: (draggable, context, position) {
-        double cellSize = 34.0;
-        double margin = 2.0;
-        double totalWidth = (cellSize + (margin * 2)) * gridCols;
-        double totalHeight = (cellSize + (margin * 2)) * gridRows;
-        
-        // Parmağın altına gelecek nokta: Şeklin tam göbeği
-        return Offset(totalWidth / 2, totalHeight / 2);
-      },
-
-      // Sürüklenen Görsel (Parmağın biraz yukarısında dursun ki görelim)
+      dragAnchorStrategy: pointerDragAnchorStrategy, // Dokunduğun yerden tutar
+      
+      // GHOST SHAPE (Sürüklenen Hayalet Şekil)
       feedback: Transform.translate(
-        offset: const Offset(0, -80), // Sniper modu: Parmağın 80px yukarısında
+        // İŞTE ÇÖZÜM: Şekli parmağın 80px YUKARISINA görsel olarak itiyoruz.
+        // Böylece parmak altta kalıyor, şekil üstte görünüyor.
+        // Ama kod tarafında parmak nereye değerse orası seçiliyor.
+        offset: const Offset(0, -90), 
         child: Material(
           color: Colors.transparent,
-          child: _buildShapeUi(true),
+          child: Transform.scale(
+            scale: 1.1, // Sürüklerken %10 büyüsün
+            child: Opacity(
+              opacity: 0.9,
+              child: _buildShapeUi(cellSize),
+            ),
+          ),
         ),
       ),
       
       childWhenDragging: Opacity(
-        opacity: 0.3,
-        child: _buildShapeUi(false),
+        opacity: 0.2,
+        child: _buildShapeUi(20), // Sürüklenirken yerinde kalan soluk kopya
       ),
       
-      child: _buildShapeUi(false),
-      
       onDragEnd: (details) => onDragEnd(),
+      
+      // Menu'deki duruşu
+      child: Container(
+        color: Colors.transparent,
+        padding: const EdgeInsets.all(10), // Tutma kolaylığı
+        child: _buildShapeUi(18), // Menüde biraz daha küçük (18px)
+      ),
+    );
+  }
+
+  Widget _buildShapeUi(double cellSize) {
+    int maxX = 0; int maxY = 0;
+    for (var p in shape.positions) { if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y; }
+
+    return SizedBox(
+      width: (maxY + 1) * cellSize,
+      height: (maxX + 1) * cellSize,
+      child: Stack(
+        children: shape.positions.map((p) {
+          return Positioned(
+            left: p.y * cellSize,
+            top: p.x * cellSize,
+            child: Container(
+              width: cellSize - 2,
+              height: cellSize - 2,
+              decoration: BoxDecoration(
+                color: shape.color,
+                borderRadius: BorderRadius.circular(6),
+                boxShadow: [BoxShadow(color: shape.color.withOpacity(0.8), blurRadius: 8, spreadRadius: 0)], // Parlama
+                border: Border.all(color: Colors.white30, width: 1),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

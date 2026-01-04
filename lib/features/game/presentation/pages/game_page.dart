@@ -29,10 +29,10 @@ class FloatingText {
 }
 
 class GamePage extends StatefulWidget {
-  const GamePage({Key? key}) : super(key: key);
+  const GamePage({super.key});
 
   @override
-  _GamePageState createState() => _GamePageState();
+  State<GamePage> createState() => _GamePageState();
 }
 
 class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
@@ -108,11 +108,9 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       size: AdSize.banner,
       listener: BannerAdListener(
         onAdLoaded: (_) {
-          print("Banner Reklam Yüklendi");
           setState(() => _isBannerAdReady = true);
         },
         onAdFailedToLoad: (ad, err) {
-          print('Banner Hatası: ${err.message}');
           _isBannerAdReady = false;
           ad.dispose();
         },
@@ -127,11 +125,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       request: const AdRequest(),
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
-          print("Ödüllü Reklam Hazır");
           _rewardedAd = ad;
         },
-        onAdFailedToLoad: (err) =>
-            print('Ödüllü Reklam Hatası: ${err.message}'),
+        onAdFailedToLoad: (err) {
+          // Ödüllü reklam yüklenemedi
+        },
       ),
     );
   }
@@ -150,8 +148,6 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       );
       _rewardedAd!.show(onUserEarnedReward: (_, __) => _performRevive());
     } else {
-      // REKLAM HAZIR DEĞİLSE DİREKT GEÇİRME!
-      print("Reklam henüz yüklenmedi");
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text("Ad is loading... Please wait."),
         duration: Duration(seconds: 1),
@@ -300,10 +296,14 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
 
       setState(() {
         for (var r in rowsToClear) {
-          for (int c = 0; c < cols; c++) grid[r][c] = null;
+          for (int c = 0; c < cols; c++) {
+            grid[r][c] = null;
+          }
         }
         for (var c in colsToClear) {
-          for (int r = 0; r < rows; r++) grid[r][c] = null;
+          for (int r = 0; r < rows; r++) {
+            grid[r][c] = null;
+          }
         }
 
         int totalCleared = rowsToClear.length + colsToClear.length;
@@ -356,10 +356,11 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       floatingTexts.add(floatingText);
     });
     Future.delayed(const Duration(milliseconds: 1000), () {
-      if (mounted)
+      if (mounted) {
         setState(() {
           floatingTexts.removeWhere((ft) => ft.key == floatingText.key);
         });
+      }
     });
   }
 
@@ -477,10 +478,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
+                          color: Colors.white.withAlpha(13),
                           borderRadius: BorderRadius.circular(12),
                           border:
-                              Border.all(color: Colors.white.withOpacity(0.1)),
+                              Border.all(color: Colors.white.withAlpha(26)),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -497,7 +498,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                               Text("BEST: $bestScore",
                                   style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.white.withOpacity(0.6)))
+                                      color: Colors.white.withAlpha(153)))
                             ])
                           ],
                         ),
@@ -514,13 +515,13 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                            color: const Color(0xFF16182B).withOpacity(0.8),
+                            color: const Color(0xFF16182B).withAlpha(204),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                                color: Colors.white.withOpacity(0.08)),
+                                color: Colors.white.withAlpha(20)),
                             boxShadow: [
                               BoxShadow(
-                                  color: Colors.black.withOpacity(0.5),
+                                  color: Colors.black.withAlpha(128),
                                   blurRadius: 30,
                                   spreadRadius: 0)
                             ]),
@@ -581,11 +582,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                 ),
 
                 // BANNER REKLAM
-                if (_isBannerAdReady)
-                  Container(
+                if (!kIsWeb && _isBannerAdReady)
+                  SizedBox(
                     width: _bannerAd!.size.width.toDouble(),
                     height: _bannerAd!.size.height.toDouble(),
-                    alignment: Alignment.center,
                     child: AdWidget(ad: _bannerAd!),
                   )
                 else
@@ -643,49 +643,50 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildGridCell(int r, int c) {
+Widget _buildGridCell(int r, int c) {
+    int targetRow = r - 2; 
+
     bool isPreview = previewPoints.any((p) => p.x == r && p.y == c);
     bool isClearing = clearingRows.contains(r) || clearingCols.contains(c);
     Color? cellColor = grid[r][c];
     Color color = const Color(0xFF202235);
     List<BoxShadow> shadows = [];
-    Border? border = Border.all(color: Colors.white.withOpacity(0.04));
+    Border? border = Border.all(color: Colors.white.withAlpha(10));
 
     if (isPreview) {
-      color = isValidMove
-          ? Colors.white.withOpacity(0.2)
-          : Colors.red.withOpacity(0.2);
-      border = Border.all(color: Colors.white.withOpacity(0.5));
+      color = isValidMove ? Colors.white.withAlpha(51) : Colors.red.withAlpha(51);
+      border = Border.all(color: Colors.white.withAlpha(128));
     } else if (cellColor != null) {
       color = isClearing ? Colors.white : cellColor;
-      shadows = [
-        BoxShadow(
-            color: isClearing ? Colors.white : cellColor.withOpacity(0.6),
-            blurRadius: isClearing ? 20 : 8,
-            spreadRadius: isClearing ? 5 : 0)
-      ];
+      shadows = [BoxShadow(color: isClearing ? Colors.white : cellColor.withAlpha(153), blurRadius: isClearing ? 20 : 8, spreadRadius: isClearing ? 5 : 0)];
       border = null;
     }
 
     return DragTarget<BlockModel>(
-      onMove: (details) => onHoverShape(details.data, r, c),
+      onMove: (details) => onHoverShape(details.data, targetRow, c), 
       onLeave: (_) {},
-      onAccept: (shape) {
-        if (isValidMove)
-          placeShape(shape, r, c);
-        else
+      onAcceptWithDetails: (details) {
+        final shape = details.data;
+        if (isValidMove) {
+          placeShape(shape, targetRow, c);
+        } else {
           setState(() => previewPoints.clear());
+        }
       },
-      builder: (context, _, __) => AnimatedContainer(
+      builder: (context, _, __) {
+        return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           width: isClearing ? 0 : 32,
           height: isClearing ? 0 : 32,
           margin: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(6),
-              border: border,
-              boxShadow: shadows)),
+            color: color, 
+            borderRadius: BorderRadius.circular(6), 
+            border: border, 
+            boxShadow: shadows
+          ),
+        );
+      },
     );
   }
 
@@ -694,7 +695,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
       children: [
         BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(color: const Color(0xFF0F101E).withOpacity(0.9))),
+            child: Container(color: const Color(0xFF0F101E).withAlpha(230))),
         Center(
           child: Padding(
             padding: const EdgeInsets.all(30.0),
@@ -706,7 +707,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                     decoration:
                         BoxDecoration(shape: BoxShape.circle, boxShadow: [
                       BoxShadow(
-                          color: Colors.cyanAccent.withOpacity(0.2),
+                          color: Colors.cyanAccent.withAlpha(51),
                           blurRadius: 40,
                           spreadRadius: 10)
                     ]),
@@ -737,10 +738,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
                       color: const Color(0xFF16182B),
                       borderRadius: BorderRadius.circular(20),
                       border:
-                          Border.all(color: Colors.cyanAccent.withOpacity(0.3)),
+                          Border.all(color: Colors.cyanAccent.withAlpha(77)),
                       boxShadow: [
                         BoxShadow(
-                            color: Colors.cyanAccent.withOpacity(0.1),
+                            color: Colors.cyanAccent.withAlpha(26),
                             blurRadius: 20)
                       ]),
                   child: Column(children: [
@@ -803,7 +804,7 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
     return Stack(children: [
       BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(color: Colors.black.withOpacity(0.7))),
+          child: Container(color: Colors.black.withAlpha(179))),
       Center(
           child: Container(
               width: 300,
@@ -811,10 +812,10 @@ class _GamePageState extends State<GamePage> with TickerProviderStateMixin {
               decoration: BoxDecoration(
                   color: const Color(0xFF1E2032),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: Colors.white.withAlpha(26)),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.purpleAccent.withOpacity(0.2),
+                        color: Colors.purpleAccent.withAlpha(51),
                         blurRadius: 40,
                         spreadRadius: 5)
                   ]),

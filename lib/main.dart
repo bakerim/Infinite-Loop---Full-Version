@@ -1,13 +1,26 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-// HATALI SATIR buydu, sonuna ; ekledik:
-import 'package:google_mobile_ads/google_mobile_ads.dart'; 
-import 'features/game/presentation/pages/splash_page.dart';
+import 'package:flutter/services.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'features/game/presentation/pages/splash_page.dart'; // Sadece bunu import ediyoruz
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MobileAds.instance.initialize();
   
+  if (!kIsWeb) {
+    try {
+      await MobileAds.instance.initialize();
+      // Test cihazı eklemek istersen buraya ekleyebilirsin
+      // await MobileAds.instance.updateRequestConfiguration(...);
+    } catch (e) {
+      print("Ads init error: $e");
+    }
+    
+    // Tam ekran ve dikey mod kilidi
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
   runApp(const MyApp());
 }
 
@@ -19,13 +32,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Infinite Loop',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0F101E),
-        textTheme: GoogleFonts.orbitronTextTheme(
-          Theme.of(context).textTheme.apply(bodyColor: Colors.white),
-        ),
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primarySwatch: Colors.cyan,
+        scaffoldBackgroundColor: const Color(0xFF0A0E21), // Ana tema rengimiz
+        fontFamily: 'Orbitron', // Eğer font yüklüyse
       ),
-      home: const SplashPage(),
+      home: const SplashPage(), // ARTIK BURADAN BAŞLIYOR
     );
   }
 }
