@@ -5,11 +5,17 @@
   channel = "stable-24.05"; # or "unstable"
   # Use https://search.nixos.org/packages to find packages
   packages = [
+    pkgs.flutter
     pkgs.jdk21
     pkgs.unzip
+    pkgs.gh
+    pkgs.android-sdk
   ];
   # Sets environment variables in the workspace
-  env = {};
+  env = {
+    ANDROID_HOME = "${pkgs.android-sdk}/libexec/android-sdk";
+    PATH = "$PATH:${pkgs.android-sdk}/libexec/android-sdk/platform-tools";
+  };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
@@ -17,9 +23,9 @@
       "Dart-Code.dart-code"
     ];
     workspace = {
-      # Runs when a workspace is first created with this `dev.nix` file
+      # Runs when a workspace is first created with this \`dev.nix\` file
       onCreate = { };
-      # To run something each time the workspace is (re)started, use the `onStart` hook
+      # To run something each time the workspace is (re)started, use the \`onStart\` hook
     };
     # Enable previews and customize configuration
     previews = {
