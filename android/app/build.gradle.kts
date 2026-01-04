@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -20,12 +18,12 @@ android {
 
     // --- JAVA VE KOTLIN SÜRÜM EŞİTLEME (HATAYI ÇÖZEN KISIM) ---
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
     // ---------------------------------------------------------
 
@@ -42,13 +40,6 @@ android {
     }
 }
 
-flutter {
-    source = "../.."
-}
-
-// JVM Hedefini tüm görevler için doğrula
-tasks.withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-        jvmTarget = "21"
-    }
+dependencies {
+    //
 }

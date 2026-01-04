@@ -23,7 +23,7 @@ dependencies:
   # Orbitron ve Rajdhani kullanabileceksin.
   google_fonts: ^6.2.1
   shared_preferences: ^2.2.2
-  google_mobile_ads: ^7.0.0
+  google_mobile_ads: ^5.1.0
   audioplayers: ^5.2.1
   
   # --- Icons ---
@@ -36,10 +36,10 @@ dev_dependencies:
   flutter_native_splash: ^2.4.0    # Profesyonel açılış ekranı için
 
   # --- Code Generation (Hive Adaptörleri için gerekli) ---
-  build_runner: ^2.4.13
+  build_runner: 2.4.11
   hive_generator: ^2.0.1
 
-  flutter_lints: ^5.0.0
+  flutter_lints: ^4.0.0
 
 flutter:
   uses-material-design: true
