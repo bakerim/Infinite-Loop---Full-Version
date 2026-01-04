@@ -1,42 +1,39 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://firebase.google.com/docs/studio/customize-workspace
 { pkgs, ... }: {
-  # Which nixpkgs channel to use.
-  channel = "stable-24.05"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
+  # Kanalı stabil tutalım
+  channel = "stable-24.05"; 
+
   packages = [
     pkgs.flutter
-    pkgs.jdk21
+    pkgs.jdk17
     pkgs.unzip
-    pkgs.gh
-    pkgs.android-sdk
+    # pkgs.android-sdk <- BU SATIR SİLİNDİ (Hataya bu sebep oluyordu)
   ];
-  # Sets environment variables in the workspace
-  env = {
-    ANDROID_HOME = "${pkgs.android-sdk}/libexec/android-sdk";
-    PATH = "$PATH:${pkgs.android-sdk}/libexec/android-sdk/platform-tools";
-  };
+
+  # Ortam değişkenleri sadeleştirildi. 
+  # IDX, Android SDK yolunu genellikle otomatik bulur.
+  env = {};
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       "Dart-Code.flutter"
       "Dart-Code.dart-code"
     ];
+    
     workspace = {
-      # Runs when a workspace is first created with this \`dev.nix\` file
-      onCreate = { };
-      # To run something each time the workspace is (re)started, use the \`onStart\` hook
+      # İlk açılışta sadece paketleri getirsin
+      onCreate = { 
+        build-flutter = "flutter pub get";
+      };
+      onStart = {
+        build-flutter = "flutter pub get";
+      };
     };
-    # Enable previews and customize configuration
+
     previews = {
       enable = true;
       previews = {
         web = {
           command = ["flutter" "run" "--machine" "-d" "web-server" "--web-hostname" "0.0.0.0" "--web-port" "$PORT"];
-          manager = "flutter";
-        };
-        android = {
-          command = ["flutter" "run" "--machine" "-d" "android" "-d" "localhost:5555"];
           manager = "flutter";
         };
       };
